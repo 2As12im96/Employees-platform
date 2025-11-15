@@ -12,6 +12,7 @@ function Departments() {
     const [deplaoding, setDeplaoding] = useState<boolean>(false);
     const [deleteItem, setDeleteItem] = useState<DeleteModalState | null>(null);
     const [filteredDepartment , setFilteredDepartment] = useState< DepartmentRow[]>([]);
+    console.log(filteredDepartment);
 
     const onDepartmentDelete = (id: string) => {
         const data = departments.filter((dep) => dep._id !== id);
