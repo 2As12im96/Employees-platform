@@ -24,7 +24,7 @@ export const columns: TableColumn<EmployeeRow>[] = [
             <img 
                 width={40} 
                 className="rounded-full" 
-                src={`http://localhost:5000/${row.profileImage}`} 
+                src={`${row.profileImage}`} 
                 alt={row.name} 
             /> 
         ),

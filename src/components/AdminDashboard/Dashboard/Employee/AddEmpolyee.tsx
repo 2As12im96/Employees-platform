@@ -25,7 +25,7 @@ function AddEmpolyee() {
     },[]);
     const handleChange = (e:any)=> {
         const {name , value , files} = e.target;
-        if(name === 'image'){
+        if(name === 'profileImage'){
             setFormData((prevData)=>( {...prevData , [name] : files[0]}))
         }else{
             setFormData((prevData)=>( {...prevData , [name] : value}))
@@ -147,7 +147,7 @@ function AddEmpolyee() {
                         {/* Upload Image */}
                         <div>
                             <label htmlFor="uploadImage" className='block text-sm font-medium text-gray-700 cursor-pointer'>Upload Image</label>
-                            <input type="file" name="image" placeholder="Upload Image" id='uploadImage' className="mt-1 p-2 block w-full border border-gray-300 rounded-md" onChange={handleChange} required/>
+                            <input type="file" name="profileImage" placeholder="Upload Image" id='uploadImage' className="mt-1 p-2 block w-full border border-gray-300 rounded-md" onChange={handleChange} required/>
                         </div>
                     </div>
                     <button type="submit" className='w-full mt-6 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-md'>
