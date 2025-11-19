@@ -101,7 +101,7 @@ const EmployeeReportViewer: React.FC = () => {
                 if (exportButton) exportButton.style.display = 'flex';
                 if (tableContainer && originalTableOverflow) tableContainer.style.overflowX = originalTableOverflow;
             }
-            setError("Failed to create PDF file. Ensure all styles are loaded correctly.");
+            setError("Failed to create PDF file. Ensure all styles are loaded correctly try again.");
         }
     };
 
