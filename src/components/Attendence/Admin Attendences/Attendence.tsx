@@ -13,17 +13,17 @@ const restructureReports = (reports: MonthlyReport[]): DailySummary => {
 
         if (Array.isArray(report.dailyAttendance)) {
              report.dailyAttendance.forEach(dayRecord => {
-                const date = dayRecord.date; 
+                 const date = dayRecord.date; 
                 
-                if (!dailySummary[date]) {
-                    dailySummary[date] = {};
-                }
+                 if (!dailySummary[date]) {
+                     dailySummary[date] = {};
+                 }
 
-                dailySummary[date][employeeId] = {
-                    checkIn: dayRecord.checkIn || 'N/A', 
-                    checkOut: dayRecord.checkOut || 'N/A',
-                };
-            });
+                 dailySummary[date][employeeId] = {
+                     checkIn: dayRecord.checkIn || 'N/A', 
+                     checkOut: dayRecord.checkOut || 'N/A',
+                 };
+             });
         }
     });
 
@@ -52,11 +52,11 @@ function Attendence() {
             const receivedReports = res.data.reports.reports; 
             
             if (receivedReports && Array.isArray(receivedReports) && receivedReports.length > 0) {
-                 setReports(receivedReports); 
-                 console.log("🎉 SUCCESS: State updated to length:", receivedReports.length);
+                setReports(receivedReports); 
+                console.log("🎉 SUCCESS: State updated to length:", receivedReports.length);
             } else {
-                 setReports([]); 
-                 console.log("⚠️ WARNING: Received reports were empty or not an array.");
+                setReports([]); 
+                console.log("⚠️ WARNING: Received reports were empty or not an array.");
             }
         } catch (err: any) {
             setError(`Failed to fetch report for month ${month}/${year}: ` + (err.response?.data?.message || err.message));
@@ -190,8 +190,8 @@ function Attendence() {
                             onClick={() => handleMonthSelect(item.year, item.month)}
                             className={`px-4 py-2 rounded-md transition duration-150 ${
                                 selectedDate?.year === item.year && selectedDate?.month === item.month
-                                    ? 'bg-teal-600 text-white shadow-lg' 
-                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                    ? 'bg-teal-600 text-white shadow-lg cursor-pointer' 
+                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300 cursor-pointer'
                             }`}
                         >
                             {getMonthName(item.month)} {item.year}
@@ -215,9 +215,9 @@ function Attendence() {
                         <div className="flex justify-start mb-4">
                             <button 
                                 onClick={exportPdf} 
-                                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-150 flex items-center"
+                                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 cursor-pointer transition duration-150 flex items-center"
                             >
-                                📥 Export Table as PDF
+                                ⬇️ Download the report (PDF)
                             </button>
                         </div>
                     )}
@@ -271,6 +271,38 @@ function Attendence() {
                                     </tbody>
                                     <tfoot>
                                         <tr className="bg-gray-100 font-bold border-t border-gray-300">
+                                            <td className="px-3 py-2 text-center font-bold border-r border-gray-300">Total Hours:</td>
+                                            {reports.map(report => (
+                                                <td key={report.employeeId + 'total'} colSpan={2} className="px-3 py-2 text-center text-yellow-700 font-bold border-r border-gray-300">
+                                                    {(Number(report.totalWorkDurationHours) || 0).toFixed(2)}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                        <tr className="bg-gray-100 font-bold">
+                                            <td className="px-3 py-2 text-center font-bold border-r border-gray-300">Required Hours:</td>
+                                            {reports.map(report => (
+                                                <td key={report.employeeId + 'req'} colSpan={2} className="px-3 py-2 text-center text-blue-700 font-bold border-r border-gray-300">
+                                                    {(Number(report.requiredHours) || 0).toFixed(2)}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                        <tr className="bg-gray-100 font-bold">
+                                            <td className="px-3 py-2 text-center font-bold border-r border-gray-300">Overtime:</td>
+                                            {reports.map(report => (
+                                                <td key={report.employeeId + 'over'} colSpan={2} className="px-3 py-2 text-center text-green-700 font-bold border-r border-gray-300">
+                                                    {(Number(report.overtimeHours) || 0).toFixed(2)}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                        <tr className="bg-gray-100 font-bold">
+                                            <td className="px-3 py-2 text-center font-bold border-r border-gray-300">Shortfall:</td>
+                                            {reports.map(report => (
+                                                <td key={report.employeeId + 'short'} colSpan={2} className="px-3 py-2 text-center text-red-600 font-bold border-r border-gray-300">
+                                                    {(Number(report.shortfallHours) || 0).toFixed(2)}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                        <tr className="bg-gray-100 font-bold">
                                             <td className="px-3 py-2 text-center font-bold border-r border-gray-300">Absence:</td>
                                             {reports.map(report => (
                                                 <td key={report.employeeId + 'abs'} colSpan={2} className="px-3 py-2 text-center text-red-600 font-bold border-r border-gray-300">

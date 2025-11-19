@@ -207,7 +207,10 @@ interface MonthlyReport {
     presentDays: number;
     totalLeaveDays: number;
     absenceDays: number;
-    totalWorkDurationHours: string;
+    totalWorkDurationHours: number;
+    requiredHours: number;
+    overtimeHours: number;
+    shortfallHours: number;
     dailyAttendance: DailyAttendance[]; 
     leaves: LeaveDetail[]; 
 }
@@ -235,6 +238,10 @@ interface DailySummary {
     };
 }
 
+interface ReportProps {
+    report: MonthlyReport
+}
+
 type UserType = { _id: string; email: string; name:string ; role: string; isActive:boolean; profileImage:string;} | null;
 
 
@@ -258,5 +265,6 @@ export type {
     ArchiveItem ,
     ArchiveResponse ,
     DailySummary ,
+    ReportProps ,
     UserType
 };

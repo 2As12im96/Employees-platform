@@ -1,146 +1,196 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
-import * as domtoimage from 'dom-to-image-more'; 
+import { useEffect, useState, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { format } from 'date-fns';
 import jsPDF from 'jspdf';
-import type { MonthlyReport } from '../../Types/type'; 
-import { getMyMonthlyReport } from '../../services/AttendanceService';
-import AttendanceReportTable from '../AttendanceReportTable'; 
+import * as domToImage from 'dom-to-image-more'; 
+import type { ArchiveItem, MonthlyReport } from "../../Types/type";
+import { getAttendanceArchive, getMyMonthlyReport } from "../../services/AttendanceService";
+import AttendanceReportTable from "../AttendanceReportTable";
 
-export const getMonthName = (month: number) => {
-    const monthNames: { [key: number]: string } = {
-        1: 'January', 2: 'February', 3: 'March', 4: 'April', 5: 'May', 6: 'June', 
-        7: 'July', 8: 'August', 9: 'September', 10: 'October', 11: 'November', 12: 'December'
-    }; 
-    return monthNames[month] || 'Unknown month';
+const getMonthName = (m: number) => {
+    const date = new Date(2000, m - 1, 1);
+    return format(date, 'MMMM');
 };
 
 const EmployeeReportViewer: React.FC = () => {
-  const { year, month } = useParams<{ year: string, month: string }>();
-  const [report, setReport] = useState<MonthlyReport | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const reportRef = useRef<HTMLDivElement>(null);
-
-  const reportYear = parseInt(year || '0', 10);
-  const reportMonth = parseInt(month || '0', 10);
-
-  useEffect(() => {
-    if (reportYear && reportMonth) {
-      const fetchReport = async () => {
-        setIsLoading(true);
-        try {
-          const response = await getMyMonthlyReport(reportYear, reportMonth);
-          setReport(response.data.report);
-        } catch (error) {
-          console.error("Error fetching employee report:", error);
-          setReport(null);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      fetchReport();
-    }
-  }, [reportYear, reportMonth]);
-
- const downloadPdf = async () => {
-    if (!report || !reportRef.current) {
-        console.error("Report data is missing or table reference is null.");
-        return; 
-    }
-    const input = reportRef.current as HTMLDivElement;
-    const tableContainer = input.querySelector('.overflow-x-auto') as HTMLDivElement;
+    const { year, month } = useParams<{ year: string, month: string }>();
+    const navigate = useNavigate();
     
-    if (!tableContainer) {
-        console.warn("Table container '.overflow-x-auto' not found. Exporting static view.");
-    }
-    let originalOverflowX: string | undefined;
-    let originalWidth: string | undefined;
+    const printRef = useRef<HTMLDivElement>(null); 
+    
+    const [report, setReport] = useState<MonthlyReport | null>(null);
+    const [archive, setArchive] = useState<ArchiveItem[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    if (tableContainer) {
-        originalOverflowX = tableContainer.style.overflowX;
-        originalWidth = tableContainer.style.width;
+    const currentYear = parseInt(year || new Date().getFullYear().toString(), 10); 
+    const currentMonth = parseInt(month || (new Date().getMonth() + 1).toString(), 10);
+
+    const exportPdf = async () => {
+        const targetElement = printRef.current;
+        if (!targetElement || !report) return;
+
+        const exportButton = targetElement.querySelector('.export-button') as HTMLElement | null;
+        const tableContainer = targetElement.querySelector('.daily-attendance-container') as HTMLElement | null;
+        
+        const originalOverflowX = targetElement.style.overflowX;
+        const originalOverflowY = targetElement.style.overflowY; 
+        const originalWidth = targetElement.style.width;
+        const originalPaddingBottom = targetElement.style.paddingBottom; 
+        const originalTableOverflow = tableContainer?.style.overflowX;
 
         try {
-            tableContainer.style.overflowX = 'visible';
-            tableContainer.style.width = `${tableContainer.scrollWidth}px`;
-            await new Promise(resolve => setTimeout(resolve, 50));
+            if (exportButton) exportButton.style.display = 'none';
+            if (tableContainer) tableContainer.style.overflow = 'visible';
+
+            targetElement.style.overflowX = 'visible';
+            targetElement.style.overflowY = 'visible';
+            targetElement.style.width = `${targetElement.scrollWidth}px`; 
+            targetElement.style.paddingBottom = '50px'; 
             
-        } catch (e) {
-            console.error("Error setting temporary styles:", e);
-        }
-    }
-    try {
-        const imgData = await domtoimage.toPng(input, {
-            quality: 1.0, 
-            bgcolor: '#ffffff', 
-            style: {
-                padding: '20px', 
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            const actualWidth = targetElement.scrollWidth;
+            const actualHeight = targetElement.scrollHeight; 
+
+            const dataUrl = await domToImage.toJpeg(targetElement, { 
+                quality: 0.95, 
+                width: actualWidth, 
+                height: actualHeight,
+                bgcolor: '#ffffff' 
+            });
+
+            targetElement.style.overflowX = originalOverflowX;
+            targetElement.style.overflowY = originalOverflowY; 
+            targetElement.style.width = originalWidth;
+            targetElement.style.paddingBottom = originalPaddingBottom; 
+            if (exportButton) exportButton.style.display = 'flex';
+            if (tableContainer && originalTableOverflow) tableContainer.style.overflowX = originalTableOverflow;
+
+            const pdf = new jsPDF('l', 'mm', 'a4'); 
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            
+            const imgWidth = pdfWidth; 
+            const imgHeight = (actualHeight * imgWidth) / actualWidth; 
+            
+            let heightLeft = imgHeight;
+            let position = 0;
+
+            pdf.addImage(dataUrl, 'JPEG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pdf.internal.pageSize.getHeight();
+            
+            while (heightLeft >= -1) { 
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(dataUrl, 'JPEG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pdf.internal.pageSize.getHeight();
             }
-        });
 
-        const pdf = new jsPDF('p', 'mm', 'a4'); 
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
+            const employeeNameForFile = report.name.replace(/\s+/g, '_') || `Employee_Report`;
+            const filename = `${employeeNameForFile}_Monthly_Report_${getMonthName(currentMonth)}_${currentYear}.pdf`;
+            pdf.save(filename);
+            
+        } catch (error) {
+            console.error("PDF export failed:", error);
 
-        const imgProps = pdf.getImageProperties(imgData);
-        const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+            if (targetElement) { 
+                targetElement.style.overflowX = originalOverflowX;
+                targetElement.style.overflowY = originalOverflowY; 
+                targetElement.style.width = originalWidth;
+                targetElement.style.paddingBottom = originalPaddingBottom;
+                if (exportButton) exportButton.style.display = 'flex';
+                if (tableContainer && originalTableOverflow) tableContainer.style.overflowX = originalTableOverflow;
+            }
+            setError("Failed to create PDF file. Ensure all styles are loaded correctly.");
+        }
+    };
+
+
+    useEffect(() => {
         
-        let heightLeft = imgHeight;
-        let position = 0;
+        const fetchArchive = async () => {
+             try {
+                 const res = await getAttendanceArchive('employee'); 
+                 setArchive(res.data.archive);
+            } catch (err: any) {
+                 console.error("Failed to retrieve the archive :", err);
+            }
+        };
 
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-        heightLeft -= pdfHeight;
+        const fetchReport = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const res = await getMyMonthlyReport(currentYear, currentMonth); 
+                setReport(res.data.report);
+            } catch (err: any) {
+                setError(`Failed to bring the report for the month ${currentMonth}/${currentYear}: ` + (err.response?.data?.message || err.message));
+                setReport(null);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-        while (heightLeft >= -1) { 
-            position = heightLeft - imgHeight;
-            pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-            heightLeft -= pdfHeight;
-        }
+        fetchArchive();
+        fetchReport();
+    }, [currentYear, currentMonth]);
 
-        const filename = `Attendance Report_${report.name}_${reportYear}_${reportMonth}.pdf`;
-        pdf.save(filename);
+    const handleArchiveNavigation = (newYear: number, newMonth: number) => {
+        navigate(`/employee-dashboard/attendence-report/${newYear}/${newMonth}`); 
+    };
 
-    } catch (error: any) {
-        console.error('oops, something went wrong while creating the PDF!', error);
-    } finally {
-        if (tableContainer && originalOverflowX !== undefined && originalWidth !== undefined) {
-            tableContainer.style.overflowX = originalOverflowX;
-            tableContainer.style.width = originalWidth;
-        }
-    }
-};
+    
 
-  if (isLoading) {
-    return <div className="p-8 text-center text-indigo-700">Loading monthly report {getMonthName(reportMonth)}...</div>;
-  }
+    if (loading) return <p className="text-center mt-10 text-lg">Loading employee report...</p>;
+    if (error) return <p className="text-red-500 text-center mt-10">{error}</p>;
 
-  if (!report) {
-    return <div className="p-8 text-center text-red-600">Sorry, no records were found for this month.</div>;
-  }
+    return (
+        <div className="p-6">
+            
+            <div className="mb-8">
+                <p className="text-lg font-medium mb-2">Archives:</p>
+                <div className="flex flex-wrap gap-2">
+                    {archive.map(item => (
+                        <button 
+                            key={`${item.year}-${item.month}`} 
+                            onClick={() => handleArchiveNavigation(item.year, item.month)}
+                            className={`px-4 py-1 text-sm rounded-full transition duration-150 ${
+                                currentYear === item.year && currentMonth === item.month
+                                    ? 'bg-blue-600 text-white shadow' 
+                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                            }`}
+                        >
+                            {getMonthName(item.month)} {item.year}
+                        </button>
+                    ))}
+                </div>
+            </div>
+            
+            <hr className="my-6" />
 
-  return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-gray-800 mb-2">Personal Attendance Report</h1>
-      <p className="text-lg text-indigo-600 mb-6">
-        For a month {getMonthName(reportMonth)} {reportYear} - employee: {report.name}
-      </p>
-      
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={downloadPdf}
-          disabled={isLoading || !report} 
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center shadow-md transition duration-200 disabled:opacity-50"
-        >
-          ⬇️ Download the report (PDF)
-        </button>
-      </div>
+            {report && (
+                <div ref={printRef} className="bg-white p-6 rounded-lg shadow-md"> 
+                    <div className="mb-6 pb-4 border-b border-gray-200 flex flex-col gap-3">
+                        <h2 className="text-2xl font-bold text-gray-800 w-full text-center sm:text-left">
+                            Monthly Summary {getMonthName(currentMonth)} {currentYear}: {report.name || 'N/A'} 
+                            {report.department && ` (${report.department})`} 
+                        </h2>
+                        
+                        <div className="export-button w-full">
+                            <button 
+                                onClick={exportPdf} 
+                                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-150 flex items-center justify-center text-sm font-medium"
+                            >
+                                📥 Export Report as PDF
+                            </button>
+                        </div>
+                    </div>
+                    <AttendanceReportTable report={report} />
 
-      <div ref={reportRef} className="p-4"> 
-        <AttendanceReportTable report={report} />
-      </div>
-      
-    </div>
-  );
+                </div>
+            )}
+        </div>
+    );
 };
 
 export default EmployeeReportViewer;

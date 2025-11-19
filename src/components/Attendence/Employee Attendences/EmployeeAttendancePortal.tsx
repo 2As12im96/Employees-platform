@@ -30,7 +30,7 @@ const EmployeeAttendancePortal = () => {
             setIsCheckedIn(true);
         } catch (error: any) {
             console.error("Check-in error:", error);
-            setStatusError(error.response?.data?.message || "Login failed. You may have already checked in today.");
+            setStatusError(error.response?.data?.message || "Check-in failed. You may have already checked in today or the server is unavailable.");
         } finally {
             setIsLoading(false);
         }
@@ -43,7 +43,7 @@ const EmployeeAttendancePortal = () => {
             setIsCheckedIn(false);
         } catch (error: any) {
             console.error("Check-out error:", error);
-            setStatusError(error.response?.data?.message || "The login failed. Please ensure you have checked in first.");
+            setStatusError(error.response?.data?.message || "Check-out failed. Please ensure you have checked in first.");
         } finally {
             setIsLoading(false);
         }
@@ -73,7 +73,7 @@ const EmployeeAttendancePortal = () => {
                                 (isCheckedIn === true || isLoading) ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 text-white'
                             }`}
                         >
-                            {isLoading && !isCheckedIn ? 'Registration in progress...' : 'Check-in'}
+                            {isLoading && !isCheckedIn ? 'Check-in in progress...' : 'Check-in'}
                         </button>
                         
                         <button
@@ -83,7 +83,7 @@ const EmployeeAttendancePortal = () => {
                                 (isCheckedIn !== true || isLoading) ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 text-white'
                             }`}
                         >
-                            {isLoading && isCheckedIn ? 'Registration in progress...' : 'Check-out'}
+                            {isLoading && isCheckedIn ? 'Check-out in progress...' : 'Check-out'}
                         </button>
                     </>
                 )}

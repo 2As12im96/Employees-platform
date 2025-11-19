@@ -1,29 +1,131 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getAttendanceArchive, getIndividualEmployeeReportForAdmin } from "../../../services/AttendanceService";
 import type { ArchiveItem, MonthlyReport } from "../../../Types/type";
 import { format } from 'date-fns';
+import jsPDF from 'jspdf';
+import * as domToImage from 'dom-to-image-more'; 
 
 const IndividualEmployeeReportAdmin: React.FC = () => {
     const { employeeId, year, month } = useParams<{ employeeId: string, year: string, month: string }>();
     const navigate = useNavigate();
+    
+    const printRef = useRef<HTMLDivElement>(null); 
     
     const [report, setReport] = useState<MonthlyReport | null>(null);
     const [archive, setArchive] = useState<ArchiveItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const currentYear = parseInt(year || new Date().getFullYear().toString());
-    const currentMonth = parseInt(month || (new Date().getMonth() + 1).toString());
+    const currentYear = parseInt(year || new Date().getFullYear().toString(), 10); 
+    const currentMonth = parseInt(month || (new Date().getMonth() + 1).toString(), 10);
+
+    const formatMinutesToHours = (value: any) => {
+        const numberValue = Number(value);
+        if (isNaN(numberValue)) return '0.00';
+        return (numberValue / 60).toFixed(2);
+    };
+
+    const formatTotalHours = (value: any) => {
+        const numberValue = Number(value);
+        if (isNaN(numberValue)) return '0.00';
+        return numberValue.toFixed(2);
+    };
+
+    const getMonthName = (m: number) => {
+        const date = new Date(2000, m - 1, 1);
+        return format(date, 'MMMM');
+    };
+    
+    const exportPdf = async () => {
+        const targetElement = printRef.current;
+        if (!targetElement || !report) return;
+
+        const exportButton = targetElement.querySelector('.export-button') as HTMLElement | null;
+        const tableContainer = targetElement.querySelector('.daily-attendance-container') as HTMLElement | null;
+        
+        const originalOverflowX = targetElement.style.overflowX;
+        const originalOverflowY = targetElement.style.overflowY; 
+        const originalWidth = targetElement.style.width;
+        const originalPaddingBottom = targetElement.style.paddingBottom; 
+        const originalTableOverflow = tableContainer?.style.overflowX;
+
+        try {
+            if (exportButton) exportButton.style.display = 'none';
+            if (tableContainer) tableContainer.style.overflow = 'visible';
+
+            targetElement.style.overflowX = 'visible';
+            targetElement.style.overflowY = 'visible';
+            targetElement.style.width = `${targetElement.scrollWidth}px`; 
+            targetElement.style.paddingBottom = '50px'; 
+            
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            const actualWidth = targetElement.scrollWidth;
+            const actualHeight = targetElement.scrollHeight; 
+
+            const dataUrl = await domToImage.toJpeg(targetElement, { 
+                quality: 0.95, 
+                width: actualWidth, 
+                height: actualHeight,
+                bgcolor: '#ffffff' 
+            });
+
+            targetElement.style.overflowX = originalOverflowX;
+            targetElement.style.overflowY = originalOverflowY; 
+            targetElement.style.width = originalWidth;
+            targetElement.style.paddingBottom = originalPaddingBottom; 
+            if (exportButton) exportButton.style.display = 'flex';
+            if (tableContainer && originalTableOverflow) tableContainer.style.overflowX = originalTableOverflow; 
+
+            const pdf = new jsPDF('l', 'mm', 'a4'); 
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            
+            const imgWidth = pdfWidth; 
+            const imgHeight = (actualHeight * imgWidth) / actualWidth; 
+            
+            let heightLeft = imgHeight;
+            let position = 0;
+
+            pdf.addImage(dataUrl, 'JPEG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pdf.internal.pageSize.getHeight();
+            
+            while (heightLeft >= -1) { 
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(dataUrl, 'JPEG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pdf.internal.pageSize.getHeight();
+            }
+
+            const employeeNameForFile = report.name.replace(/\s+/g, '_') || `Employee_${report.employeeId}`;
+            const filename = `${employeeNameForFile}_Monthly_Report_${getMonthName(currentMonth)}_${currentYear}.pdf`;
+            pdf.save(filename);
+            
+        } catch (error) {
+            console.error("PDF export failed:", error);
+
+            if (targetElement) { 
+                targetElement.style.overflowX = originalOverflowX;
+                targetElement.style.overflowY = originalOverflowY; 
+                targetElement.style.width = originalWidth;
+                targetElement.style.paddingBottom = originalPaddingBottom;
+                if (exportButton) exportButton.style.display = 'flex';
+                if (tableContainer && originalTableOverflow) tableContainer.style.overflowX = originalTableOverflow;
+            }
+            setError("Failed to create PDF file. Ensure all styles are loaded correctly.");
+        }
+    };
+
 
     useEffect(() => {
         if (!employeeId) return;
+        
         const fetchArchive = async () => {
              try {
-                const res = await getAttendanceArchive('admin'); 
-                setArchive(res.data.archive);
+                 const res = await getAttendanceArchive('admin'); 
+                 setArchive(res.data.archive);
             } catch (err: any) {
-                console.error("Failed to retrieve the archive :", err);
+                 console.error("Failed to retrieve the archive :", err);
             }
         };
 
@@ -49,21 +151,14 @@ const IndividualEmployeeReportAdmin: React.FC = () => {
         navigate(`/admin-dashboard/attendence-report/employee/${employeeId}/${newYear}/${newMonth}`);
     };
 
-    const getMonthName = (m: number) => {
-        const date = new Date(2000, m - 1, 1);
-        return format(date, 'MMMM');
-    };
+    
 
     if (loading) return <p className="text-center mt-10 text-lg">Loading employee report...</p>;
     if (error) return <p className="text-red-500 text-center mt-10">{error}</p>;
 
     return (
         <div className="p-6">
-            <h2 className="text-3xl font-bold mb-6 text-blue-700">Attendance report for : {report?.name || 'N/A'}</h2>
-            <h3 className="text-xl font-semibold mb-4">
-                Month: {getMonthName(currentMonth)} {currentYear}
-            </h3>
-
+            
             <div className="mb-8">
                 <p className="text-lg font-medium mb-2">Archives:</p>
                 <div className="flex flex-wrap gap-2">
@@ -86,59 +181,100 @@ const IndividualEmployeeReportAdmin: React.FC = () => {
             <hr className="my-6" />
 
             {report && (
-                <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 text-center bg-gray-100 p-4 rounded-lg shadow-inner">
-                    <div className="p-3 border rounded">
-                        <p className="text-2xl font-bold text-green-600">{report.presentDays}</p>
-                        <p className="text-sm text-gray-500">Days of attendance</p>
+                <div ref={printRef} className="bg-white p-6 rounded-lg shadow-md"> 
+                    <div className="mb-6 pb-4 border-b border-gray-200 flex flex-col gap-3">
+                        <h2 className="text-2xl font-bold text-gray-800 w-full text-center sm:text-left">
+                            Monthly Summary {getMonthName(currentMonth)} {currentYear}: {report.name || 'N/A'} 
+                            {report.department && ` (${report.department})`} 
+                        </h2>
+                        
+                        <div className="export-button w-full">
+                            <button 
+                                onClick={exportPdf} 
+                                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-150 flex items-center justify-center text-sm font-medium"
+                            >
+                                ⬇️ Download the report (PDF)
+                            </button>
+                        </div>
                     </div>
-                    
-                    <div className="p-3 border rounded">
-                        <p className="text-2xl font-bold text-blue-600">{report.totalLeaveDays}</p>
-                        <p className="text-sm text-gray-500">Approved Leaves</p>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
+                        
+                        <div className="bg-white border border-gray-200 rounded-lg p-3 text-center shadow-sm">
+                            <p className="text-2xl font-bold text-blue-600">{report.presentDays}</p>
+                            <p className="text-sm text-gray-500">Attendance Days</p>
+                        </div>
+                        
+                        <div className="bg-white border border-gray-200 rounded-lg p-3 text-center shadow-sm">
+                            <p className="text-2xl font-bold text-green-600">{report.totalLeaveDays}</p>
+                            <p className="text-sm text-gray-500">Approved Leaves</p>
+                        </div>
+                        
+                        <div className="bg-white border border-gray-200 rounded-lg p-3 text-center shadow-sm">
+                            <p className="text-2xl font-bold text-red-600">{report.absenceDays}</p>
+                            <p className="text-sm text-gray-500">Actual Absence</p>
+                        </div>
+                        
+                        <div className="bg-white border border-gray-200 rounded-lg p-3 text-center shadow-sm">
+                            <p className="text-2xl font-bold text-purple-600">{formatTotalHours(report.totalWorkDurationHours)}</p>
+                            <p className="text-sm text-gray-500">Total Hours</p>
+                        </div>
+
+                        <div className="bg-white border border-gray-200 rounded-lg p-3 text-center shadow-sm">
+                            <p className="text-2xl font-bold text-gray-800">{formatTotalHours(report.requiredHours)}</p>
+                            <p className="text-sm text-gray-500">Required Hours</p>
+                        </div>
+
+                        <div className="bg-white border border-gray-200 rounded-lg p-3 text-center shadow-sm">
+                            <p className="text-2xl font-bold text-indigo-600">{formatTotalHours(report.overtimeHours)}</p>
+                            <p className="text-sm text-gray-500">Overtime Hours</p>
+                        </div>
+
+                        <div className="bg-white border border-gray-200 rounded-lg p-3 text-center shadow-sm">
+                            <p className="text-2xl font-bold text-pink-600">{formatTotalHours(report.shortfallHours)}</p>
+                            <p className="text-sm text-gray-500">Shortfall Hours</p>
+                        </div>
                     </div>
-                    
-                    <div className="p-3 border rounded">
-                        <p className="text-2xl font-bold text-red-600">{report.absenceDays}</p>
-                        <p className="text-sm text-gray-500">Actual absence</p>
-                    </div>
-                    
-                    <div className="p-3 border rounded">
-                        <p className="text-2xl font-bold text-purple-600">{report.totalWorkDurationHours}</p>
-                        <p className="text-sm text-gray-500">Total working hours (hours)</p>
-                    </div>
+                
+                    <h3 className="text-xl font-semibold mt-8 mb-4 border-t pt-4">Daily attendance log</h3>
+                    {report?.dailyAttendance && report.dailyAttendance.length > 0 ? (
+                        <div className="daily-attendance-container overflow-x-auto bg-white rounded-md border border-gray-200"> 
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-100">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">Date</th>
+                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">Check In</th>
+                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">Check Out</th>
+                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">Working Time (Hours)</th>
+                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {report.dailyAttendance.map((day, index) => (
+                                        <tr key={index} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-left">{day.date}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">{day.checkIn}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">{day.checkOut}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">
+                                                {formatMinutesToHours(day.workDuration)}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                    ${day.status === 'Full Day' ? 'bg-green-100 text-green-800' :
+                                                      day.status === 'Early Out' ? 'bg-yellow-100 text-yellow-800' :
+                                                      'bg-gray-100 text-gray-800'}`}>
+                                                    {day.status}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <p className="text-center text-gray-500 mt-4">There are no attendance records for this month.</p>
+                    )}
                 </div>
-                </>
-            )}
-            
-            <h3 className="text-2xl font-semibold mt-8 mb-4">Daily attendance log</h3>
-            {report?.dailyAttendance && report.dailyAttendance.length > 0 ? (
-                <div className="overflow-x-auto bg-white shadow-lg rounded-md">
-                    <table className="min-w-full divide-y divide-gray-200 text-center">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Log in</th>
-                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Log out</th>
-                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Working time (minutes)</th>
-                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {report.dailyAttendance.map((day, index) => (
-                                <tr key={index}>
-                                    <td className="px-6 py-4 whitespace-nowrap">{day.date}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">{day.checkIn}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">{day.checkOut}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">{day.workDuration}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">{day.status}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            ) : (
-                <p className="text-center text-gray-500">There are no attendance records for this month.</p>
             )}
         </div>
     );
