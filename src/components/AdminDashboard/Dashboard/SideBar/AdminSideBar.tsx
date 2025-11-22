@@ -49,6 +49,14 @@ function AdminSideBar({ isOpen, toggleSidebar }: AdminSideBarProps) {
                             <span className="ml-3">Employees</span>
                         </li>
                     </NavLink>
+
+                    <NavLink to='/admin-dashboard/admin-list' className={({ isActive }) => `${isActive ? "bg-teal-500" : ""} flex items-center space-x-4 block py-2.5 px-4 rounded`}>
+                        <li>
+                            <FontAwesomeIcon icon={faUsers} />
+                            <span className="ml-3">Admins</span>
+                        </li>
+                    </NavLink>
+
                     <NavLink to='/admin-dashboard/departments' className={({ isActive }) => `${isActive ? "bg-teal-500" : ""} flex items-center space-x-4 block py-2.5 px-4 rounded`}>
                         <li>
                             <FontAwesomeIcon icon={faBuilding} />

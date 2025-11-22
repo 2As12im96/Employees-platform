@@ -26,6 +26,8 @@ import EmployeeReportViewer from "./components/Attendence/Employee Attendences/E
 import IndividualEmployeeReportAdmin from "./components/AdminDashboard/Dashboard/Employee/IndividualEmployeeReportAdmin";
 import SimpleReportFetcher from "./components/Attendence/Admin Attendences/Attendence";
 import {jwtDecode} from 'jwt-decode';
+import AdminList from "./components/AdminDashboard/Dashboard/Admins/AdminList";
+import AdminDetails from "./components/AdminDashboard/Dashboard/Admins/AdminDetails";
 
 
 const App: React.FC = () => {
@@ -61,6 +63,9 @@ const App: React.FC = () => {
             <Route path="/admin-dashboard/employees/:id" element={<View userRole={userRole}/>}></Route>
             <Route path="/admin-dashboard/add-employees" element={<AddEmpolyee/>}></Route>
             <Route path="/admin-dashboard/employees/edit/:id" element={<EditEmployee/>}></Route>
+
+            <Route path="/admin-dashboard/admin-list" element={<AdminList />} />
+            <Route path="/admin-dashboard/admin-details/:id" element={<AdminDetails />} />
           
             {/* Departments Admin */}
             <Route path="/admin-dashboard/departments" element={<Departments/>}></Route>

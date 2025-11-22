@@ -7,7 +7,7 @@ import { Url } from "../../../../utils/Url";
 import { columns ,EmployeeButtons } from "../../../../utils/EmployeeHelper";
 
 function Employee() {
-    const [employee , setEmployee] = useState<EmployeeRow[]>([]);
+    const [employees , setEmployees] = useState<EmployeeRow[]>([]);
     const [emplaoding, setEmolaoding] = useState<boolean>(false);
     const [filteredEmployee , setFilteredEmployee] = useState<EmployeeRow[]>([]);
     
@@ -33,8 +33,8 @@ function Employee() {
                             action: (<EmployeeButtons Id={emp._id}/>)
                         }
                     ));
-                    setEmployee(data);
-                    setFilteredEmployee(data)
+                    setEmployees(data);
+                    setFilteredEmployee(data);
                 }
             }
             catch (err: any) {
@@ -52,12 +52,11 @@ function Employee() {
 
     const handleFilter = (e:any)=>{
         const searchTerm = e.target.value.toLowerCase();
-        const records = employee.filter((emp)=> {
+        const records = employees.filter((emp)=> {
             return emp.name.toLowerCase().includes(searchTerm)
         })
         setFilteredEmployee(records)
     }
-
     return (
       <>
         {emplaoding ? 

@@ -93,7 +93,9 @@ function ViewSalary() {
                             </table>
                         ): 
                         (
-                            <div>No Records</div>
+                            <div className="w-full">
+                                <p className="text-center">No Records</p>
+                            </div>
                         )
                     }
                 </div>

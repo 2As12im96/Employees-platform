@@ -74,7 +74,7 @@ function LeaveDetails() {
                     <div className="max-w-3xl mx-auto mt-10 bg-white p-8 rounded-md shadow-md">
                         <h2 className="text-2xl font-bold mb-8 text-center">Leave Details</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <img src={`http://localhost:5000/${leave?.employeeId.userId.profileImage}`} className="rounded-full border w-72 h-72 object-cover mt-1" alt="" />
+                            <img src={`${leave?.employeeId.userId.profileImage}`} className="rounded-full border w-72 h-72 object-cover mt-1" alt="" />
                             <div className="p-4">
                                 <div className="flex space-x-3 mb-5">
                                     <p className="text-lg font-bold">Name:</p>

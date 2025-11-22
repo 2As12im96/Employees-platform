@@ -242,6 +242,16 @@ interface ReportProps {
     report: MonthlyReport
 }
 
+interface AdminRow {
+    _id: string;
+    sno: number;
+    name: string;
+    email: string;
+    profileImage: string;
+    action: JSX.Element;
+};
+
+
 type UserType = { _id: string; email: string; name:string ; role: string; isActive:boolean; profileImage:string;} | null;
 
 
@@ -266,5 +276,6 @@ export type {
     ArchiveResponse ,
     DailySummary ,
     ReportProps ,
+    AdminRow ,
     UserType
 };
