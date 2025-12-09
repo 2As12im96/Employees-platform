@@ -28,6 +28,8 @@ import SimpleReportFetcher from "./components/Attendence/Admin Attendences/Atten
 import {jwtDecode} from 'jwt-decode';
 import AdminList from "./components/AdminDashboard/Dashboard/Admins/AdminList";
 import AdminDetails from "./components/AdminDashboard/Dashboard/Admins/AdminDetails";
+import GenerateToken from "./components/Authentication/Login/GenerateToken";
+import SimpleResetPassword from "./components/Authentication/Login/SimpleResetPassword";
 
 
 const App: React.FC = () => {
@@ -47,6 +49,8 @@ const App: React.FC = () => {
       <Routes>
         <Route path="/" element={<Navigate to="/admin-dashboard" />}></Route>
         <Route path="/login" element={<Login />} ></Route>
+        <Route path="/forgot-password" element={<GenerateToken />} ></Route>
+        <Route path="/update-password/:token" element={<SimpleResetPassword />} ></Route>
 
         {/* Admin Dashboard */}
         <Route path="/admin-dashboard" element={

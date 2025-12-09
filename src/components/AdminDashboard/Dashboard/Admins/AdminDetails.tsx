@@ -1,11 +1,9 @@
-// AdminDetails.tsx
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Url } from "../../../../utils/Url";
 import React from "react";
 
-// تعريف الواجهة لبيانات المدير
 interface AdminUser {
     _id: string;
     name: string;
@@ -13,13 +11,10 @@ interface AdminUser {
     role: string;
     profileImage: string;
     createdAt: string;
-    // يمكن إضافة المزيد من الحقول هنا إذا لزم الأمر
 }
 
 const AdminDetails: React.FC = () => {
-    // استخدام النوع الصحيح لـ useParams
     const { id } = useParams<{ id: string }>(); 
-    // استخدام النوع الصحيح لـ useState (البيانات إما AdminUser أو null)
     const [admin, setAdmin] = useState<AdminUser | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
 
@@ -27,7 +22,6 @@ const AdminDetails: React.FC = () => {
         const fetchAdminDetails = async () => {
             setLoading(true);
             try {
-                // تحديد نوع الاستجابة المتوقع من Axios
                 const res = await axios.get<{ success: boolean; admin: AdminUser }>(`${Url}/admins/${id}`, { 
                     headers: {
                         "Authorization": `Bearer ${localStorage.getItem('token')}`
@@ -42,7 +36,6 @@ const AdminDetails: React.FC = () => {
                 setLoading(false);
             }
         };
-        // التأكد من وجود ID قبل جلب البيانات
         if (id) {
             fetchAdminDetails();
         }
