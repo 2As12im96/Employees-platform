@@ -1,5 +1,5 @@
 # 🏢 Employee Management System (EMS)
-![Project Preview](/image/WhatsApp%20Image%202025-12-20%20at%2001.34.22_2ad6db42.jpg)
+![Project Preview](public/image/WhatsApp%20Image%202025-12-20%20at%2001.34.22_2ad6db42.jpg)
 
 ---
 
