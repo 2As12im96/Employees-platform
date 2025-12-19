@@ -1,45 +1,9 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import styles from "./login.module.css";
 import { Link } from 'react-router-dom';
-import { Url } from '../../../utils/Url';
-
-const API_BASE_URL = Url;
+import useGenerateLogic from '../../Hooks/generate.logic';
 
 const GenerateToken: React.FC = () => {
-    const [email, setEmail] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    
-    const navigate = useNavigate();
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError(null);
-        setSuccessMessage(null);
-
-        try {
-            const response = await axios.post<{ success: boolean; message: string; token: string }>(
-                `${API_BASE_URL}/generate-reset-token`,
-                { email }
-            );
-
-            const receivedToken = response.data.token;
-            navigate(`/update-password/${receivedToken}`);
-            
-        } catch (err: any) {
-            console.error("Error generating token:", err);
-            
-            const errorMessage = err.response?.data?.error || "Failed to generate the update link. Ensure the email is correct.";
-            setError(errorMessage);
-        } finally {
-            setLoading(false);
-        }
-    };
-
+    const { setEmail , loading , error , successMessage , handleSubmit } = useGenerateLogic();
     return (
         <section className={styles.login + " flex flex-col items-center h-screen justify-center bg-gradient-to-b from-teal-600 from-50% to-gray-100 to-50% space-y-6"}>
             <h2 className="font-Playwrite text-4xl font-extrabold text-white text-center drop-shadow-lg">Employee Management System</h2>

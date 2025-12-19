@@ -1,41 +1,13 @@
-import axios from "axios";
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { Url } from "../../../../utils/Url";
+import { useEffect } from "react";
 import React from "react";
+import useAdminLogic from "../../../Hooks/admin.logic";
 
-interface AdminUser {
-    _id: string;
-    name: string;
-    email: string;
-    role: string;
-    profileImage: string;
-    createdAt: string;
-}
+
 
 const AdminDetails: React.FC = () => {
-    const { id } = useParams<{ id: string }>(); 
-    const [admin, setAdmin] = useState<AdminUser | null>(null);
-    const [loading, setLoading] = useState<boolean>(true);
-
+    const { id , admin , loading , fetchAdminDetails} = useAdminLogic();
     useEffect(() => {
-        const fetchAdminDetails = async () => {
-            setLoading(true);
-            try {
-                const res = await axios.get<{ success: boolean; admin: AdminUser }>(`${Url}/admins/${id}`, { 
-                    headers: {
-                        "Authorization": `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
-                if (res.data.success) {
-                    setAdmin(res.data.admin);
-                }
-            } catch (err: any) {
-                alert(err.response?.data?.message || "Error fetching admin details");
-            } finally {
-                setLoading(false);
-            }
-        };
+        fetchAdminDetails();
         if (id) {
             fetchAdminDetails();
         }

@@ -1,12 +1,10 @@
 import { NavLink } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBuilding, faCalendarDays, faGaugeHigh, faGear, faMoneyBillWave, faTimes, faUsers } from "@fortawesome/free-solid-svg-icons";
+import type { AdminSideBarProps } from "../../../Types/type";
 
 
-interface AdminSideBarProps {
-    isOpen: boolean;
-    toggleSidebar: () => void;
-}
+
 
 function AdminSideBar({ isOpen, toggleSidebar }: AdminSideBarProps) {
     const sidebarClasses = `

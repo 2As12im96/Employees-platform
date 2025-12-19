@@ -5,9 +5,9 @@ import axios from "axios";
 import styles from '../../../Authentication/Login/login.module.css';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
-import useLoginLogic from "../../../Authentication/Login/login.logic";
 import type { Setting } from "../../../Types/type";
 import { Url } from "../../../../utils/Url";
+import useLoginLogic from "../../../Hooks/Login.logic";
 
 function EmployeeSetting() {
     const navigate = useNavigate();

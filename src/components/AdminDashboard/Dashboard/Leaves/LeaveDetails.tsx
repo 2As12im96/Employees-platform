@@ -1,65 +1,11 @@
-import { useNavigate, useParams } from "react-router-dom"
-import axios from "axios";
-import type { LeaveDetailsRow } from "../../../Types/type";
-import { useEffect, useState } from "react";
-import { Url } from "../../../../utils/Url";
+import { useEffect } from "react";
+import useLeave from "../../../Hooks/leave.logic";
 
 function LeaveDetails() {
-    const { id } = useParams<{ id?: string }>();
-
-    const [leave, setLeave] = useState<LeaveDetailsRow | null>(null);
-    const [loading, setLaoding] = useState<boolean>(false);
-    const [error, setError] = useState<boolean | string>(false);
-    const navigate = useNavigate();
-
+    const {id , leave , loading , error , fetchLeave , changeStatus} = useLeave();
     useEffect(() => {
-        const fetchLeave = async () => {
-            if (!id) return;
-            setLaoding(true);
-            try {
-                const res = await axios.get(`${Url}/leave/detail/${id}`, {
-                    headers: {
-                        "Authorization": `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
-                if (res.data.success && res.data.leave) {
-                    setLeave(res.data.leave);
-                } else {
-                    setError('No leave record found.');
-                }
-            }
-            catch (err: any) {
-                if (err.response && err.response.data) {
-                    setError(err.response.data.err || 'Failed to fetch leave details.');
-                } else {
-                    setError('Failed to fetch data due to a network error.');
-                }
-            }
-            finally {
-                setLaoding(false);
-            }
-        }
         fetchLeave();
     }, [id]);
-    const changeStatus = async (leaveId: string, status: 'Approved' | 'Rejected') => {
-        try {
-            const res = await axios.put(`${Url}/leave/${leaveId}`, { status }, {
-                headers: {
-                    "Authorization": `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            if (res.data.success) {
-                navigate('/admin-dashboard/leaves');
-            }
-        }
-        catch (err: any) {
-            if (err.response && err.response.data) {
-                 setError(err.response.data.message || 'Failed to update status.');
-            } else {
-                 setError('Network error or unknown failure.');
-            }
-        }
-    }
     return (
         <>
             {loading ? 

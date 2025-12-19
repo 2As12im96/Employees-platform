@@ -2,7 +2,8 @@ import styles from "./login.module.css";
 import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
-import useLoginLogic from "./login.logic";
+import useLoginLogic from "../../Hooks/Login.logic";
+
 
 const Login: React.FC = ()=> {
   const { setEmail , setPassword , res , loading , error , eye , handleSubmit , toggleEye } = useLoginLogic();

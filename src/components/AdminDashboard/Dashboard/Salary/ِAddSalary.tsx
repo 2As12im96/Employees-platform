@@ -1,68 +1,14 @@
-import { useEffect, useState } from "react"
-import type { DepartmentRow, EmployeeRow } from "../../../Types/type";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react"
 import styles from '../../../Authentication/Login/login.module.css';
-import { fetchEmployees, getEmployees } from "../../../../utils/EmployeeHelper";
-import { Url } from "../../../../utils/Url";
-
-
+import useSalary from "../../../Hooks/salary.logic";
+import LoadingPage from "../../../pages/Loading";
 
 function Salary() {
-    const [salary  , setSalary] = useState({
-        employeeId:null,
-        basicSalary:0,
-        allowances:0,
-        deductions:0,
-        salary:0,
-        payDate:null
-    });
-    const [employees  , setEmployees] = useState<EmployeeRow[]>([]);
-    const [departments  , setDepartments] = useState<DepartmentRow[] | null>(null);
-    const [empLoading , setEmpLaoding] = useState<boolean>(false);
-    const [error , setError] = useState<string | null>(null);
-    const navigate = useNavigate();
+    const { employees , departments , empLoading , error , getDepartments , handleDepartment , handleChange , handleSubmit} = useSalary();
 
     useEffect(()=>{
-        const getDepartments = async () => {
-            const departments = await fetchEmployees();
-            setDepartments(departments);
-        };
         getDepartments();
     },[]);
-
- 
-    const handleDepartment = async(e: React.ChangeEvent<HTMLSelectElement>)=>{ 
-      const emps = await getEmployees(e.target.value); 
-      setEmployees(emps)
-    }
-
-    const handleChange = (e:any)=> {
-        const {name , value } = e.target;
-        setSalary((prevData)=>( {...prevData , [name] : value}))
-    }
-
-
-    const handleSubmit = async(e:any)=>{
-        e.preventDefault();
-        setEmpLaoding(true)
-        try{
-            const res = await axios.post(`${Url}/salary/add` , salary ,{
-                headers:{
-                    Authorization: `Bearer ${localStorage.getItem('token')}`,
-                },
-            });
-            if(res.data.success){
-                navigate('/admin-dashboard/employees');
-            }
-        } catch(err: any) {
-              setError('Server Error: ' + (err?.message ?? String(err)));
-              setEmpLaoding(false);
-        }
-        finally{
-            setEmpLaoding(false);
-        }
-    }
     return (
         <>
             {departments ? (
@@ -155,13 +101,8 @@ function Salary() {
                 {error && <p className="text-red font-bold p-4">{error}</p> || null}
             </div>
             ) : 
-            <div className="fixed inset-0 bg-white/80 flex items-center justify-center z-50">
-              <svg className="animate-spin h-10 w-10 text-teal-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <span className="ml-3 text-lg text-gray-700">Loading...</span>
-          </div>}
+            <LoadingPage />
+            }
         </>
     )
 }

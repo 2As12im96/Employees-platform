@@ -1,65 +1,22 @@
-import { useEffect, useState } from "react"
-import type { DepartmentRow } from "../../../Types/type";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import useLoginLogic from "../../../Authentication/Login/login.logic";
+import { useEffect } from "react"
 import styles from "../../../Authentication/Login/login.module.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
-import { Url } from "../../../../utils/Url";
-import { fetchEmployees } from "../../../../utils/EmployeeHelper";
+import useLoginLogic from "../../../Hooks/Login.logic";
+import useEmployee from "../../../Hooks/employee.logic";
 
 function AddEmpolyee() {
     const { eye , toggleEye} = useLoginLogic();
-    const [department  , setDepartment] = useState<DepartmentRow[]>([]);
-    const [loading , setLoading] = useState<boolean>(false);
-    const [error , setError] = useState<string | null>(null);
-    const [formData , setFormData] = useState<Record<string, any>>({});
-    const navigate = useNavigate();
+    const { department , loading , error , fetchData , handleChange , handleAddSubmit} = useEmployee();
     useEffect(()=>{
-        const fetchData = async () => {
-            const departments = await fetchEmployees();
-            setDepartment(departments);
-        };
         fetchData();
     },[]);
-    const handleChange = (e:any)=> {
-        const {name , value , files} = e.target;
-        if(name === 'profileImage'){
-            setFormData((prevData)=>( {...prevData , [name] : files[0]}))
-        }else{
-            setFormData((prevData)=>( {...prevData , [name] : value}))
-        }
-    }
-    const handleSubmit = async(e:any)=>{
-        e.preventDefault();
-        const formDataObj = new FormData();
-        Object.keys(formData).forEach((key)=>{
-            formDataObj.append(key , formData[key])
-        });
-        setLoading(true)
-        try{
-            const res = await axios.post(`${Url}/employee/add` , formDataObj ,{
-                headers:{
-                    Authorization: `Bearer ${localStorage.getItem('token')}`,
-                },
-            });
-            if(res.data.success){
-                navigate('/admin-dashboard/employees');
-            }
-        } catch(err: any) {
-              setError('Server Error: ' + (err?.message ?? String(err)));
-              setLoading(false);
-        }
-        finally{
-            setLoading(false);
-        }
-    }
+
     return (
         <>
             <div className='max-w-6xl mx-auto mt-10 bg-white p-8 rounded-md shadow'>
                 <h2 className="text-2xl font-bold mb-6">Add New Member</h2>
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleAddSubmit}>
                     <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                         {/* Name */}
                         <div>

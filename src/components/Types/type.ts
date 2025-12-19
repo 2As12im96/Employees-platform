@@ -1,5 +1,23 @@
 import type { FormEvent, JSX } from "react";
 
+interface AdminSideBarProps {
+    isOpen: boolean;
+    toggleSidebar: () => void;
+}
+
+interface AdminUser {
+    _id: string;
+    name: string;
+    email: string;
+    role: string;
+    profileImage: string;
+    createdAt: string;
+}
+
+interface ViewProps {
+    userRole: string;
+}
+
 interface UseLoginLogicResult {
     setEmail: (email: string) => void;
     setPassword: (password: string) => void;
@@ -9,6 +27,18 @@ interface UseLoginLogicResult {
     eye: boolean;
     handleSubmit: (e: FormEvent) => Promise<void>;
     toggleEye: () => void;
+}
+
+interface SummaryDate {
+    totalDepartments:number,
+    totalEmployees:number,
+    totalSalary:number,
+    leaveSummary:{
+        appliedFor:number,
+        approved:number,
+        pending:number,
+        rejected:number,
+    }
 }
 
 interface LoginResponse {
@@ -255,7 +285,11 @@ interface AdminRow {
 type UserType = { _id: string; email: string; name:string ; role: string; isActive:boolean; profileImage:string;} | null;
 
 
-export type { 
+export type {
+    AdminSideBarProps , 
+    AdminUser ,
+    ViewProps ,
+    SummaryDate , 
     DepartmentButtonsProps, 
     DepartmentRow , 
     EmployeeRow ,

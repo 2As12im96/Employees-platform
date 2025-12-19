@@ -1,65 +1,11 @@
-import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import styles from "./login.module.css";
 import { Link } from 'react-router-dom';
-import { Url } from '../../../utils/Url';
-
-const API_BASE_URL = Url; 
+import useResetPassword from '../../Hooks/resetPassword.logic';
 
 const SimpleResetPassword: React.FC = () => {
-    const { token } = useParams<{ token: string }>(); 
-    const navigate = useNavigate();
-
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [eye, setEye] = useState(false);
-
-    const toggleEye = () => setEye(!eye);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError(null);
-        setSuccessMessage(null);
-
-        if (newPassword !== confirmPassword) {
-            setError("New password and confirmation do not match.");
-            setLoading(false);
-            return;
-        }
-
-        if (!token) {
-            setError("Reset token is missing. Please start from the 'Forgot Password' page.");
-            setLoading(false);
-            return;
-        }
-
-        try {
-            const response = await axios.patch<{ success: boolean; message: string }>(
-                `${API_BASE_URL}/reset-password-simple/${token}`,
-                { newPassword }
-            );
-
-            setSuccessMessage(response.data.message || "Password updated successfully.");
-            setTimeout(() => {
-                navigate('/login');
-            }, 3000);
-            
-        } catch (err: any) {
-            console.error("Error updating password:", err);
-            
-            const errorMessage = err.response?.data?.error || "Failed to update password. The link might be expired.";
-            setError(errorMessage);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { setNewPassword , setConfirmPassword , loading , error , eye , successMessage , toggleEye , handleSubmit } = useResetPassword();
 
     return (
         <section className={styles.login + " flex flex-col items-center h-screen justify-center bg-gradient-to-b from-teal-600 from-50% to-gray-100 to-50% space-y-6"}>

@@ -1,10 +1,9 @@
-import { useState, useCallback, type FormEvent} from "react";
-import axios, { AxiosError } from "axios";
-import { useAuth } from "../../Context/Context";
+import { useCallback, useState, type FormEvent } from "react";
+import type { LoginResponse, UseLoginLogicResult } from "../Types/type";
+import { useAuth } from "../Context/Context";
 import { useNavigate } from "react-router-dom";
-import type { LoginResponse, UseLoginLogicResult } from "../../Types/type";
-import { Url } from "../../../utils/Url";
-
+import { Url } from "../../utils/Url";
+import axios, { AxiosError }  from "axios";
 
 
 function useLoginLogic(): UseLoginLogicResult {

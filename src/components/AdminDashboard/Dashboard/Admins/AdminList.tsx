@@ -1,10 +1,9 @@
 import React from "react";
-import axios from "axios";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect , useMemo } from "react";
 import { Link } from "react-router-dom";
 import DataTable, { type TableColumn } from "react-data-table-component";
-import { Url } from "../../../../utils/Url";
 import type { AdminRow } from "../../../Types/type";
+import useAdminLogic from "../../../Hooks/admin.logic";
 
 
 
@@ -31,56 +30,13 @@ const adminColumns: TableColumn<AdminRow>[] = [
 ];
 
 const AdminList: React.FC = () => {
-    const [admins, setAdmins] = useState<AdminRow[]>([]);
-    const [loading, setLoading] = useState<boolean>(false);
-    const [filteredAdmins, setFilteredAdmins] = useState<AdminRow[]>([]);
-
-    const fetchAdmins = async () => {
-        setLoading(true);
-        try {
-            const res = await axios.get<{ success: boolean; admins: any[] }>(`${Url}/admins`, {
-                headers: {
-                    "Authorization": `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            
-            if (res.data.success) {
-                let sno = 1;
-                const data: AdminRow[] = res.data.admins.map((admin: any) => ({
-                    _id: admin._id,
-                    sno: sno++,
-                    name: admin.name,
-                    email: admin.email,
-                    profileImage: admin.profileImage,
-                    action: (
-                        <Link to={`/admin-dashboard/admin-details/${admin._id}`} className='w-20 bg-green-500 text-white text-center px-5 py-1 rounded mr-2 hover:bg-green-700 transition w-20 h-8'>
-                            View
-                        </Link>
-                    )
-                }));
-                setAdmins(data);
-                setFilteredAdmins(data);
-            }
-        } catch (err: any) {
-            alert(err.response?.data?.message || "Error fetching admin data");
-        } finally {
-            setLoading(false);
-        }
-    };
-
+    const { loading , filteredAdmins ,  fetchAdmins , handleFilter} = useAdminLogic();
     useEffect(() => {
         fetchAdmins();
     }, []);
 
     const memoizedColumns = useMemo(() => adminColumns, []);
 
-    const handleFilter = (e: React.ChangeEvent<HTMLInputElement>)=>{
-        const searchTerm = e.target.value.toLowerCase();
-        const records = admins.filter((admin) => {
-            return admin.name.toLowerCase().includes(searchTerm) || admin.email.toLowerCase().includes(searchTerm);
-        });
-        setFilteredAdmins(records);
-    };
 
     return (
         <>
