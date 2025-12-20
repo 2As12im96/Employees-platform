@@ -9,6 +9,8 @@
 
 The project is built using the latest **React 19** ecosystem, leveraging **Vite** for an ultra-fast development cycle, **Tailwind CSS 4** for cutting-edge styling, and **TypeScript** for robust, type-safe code.
 
+if you want sign in use this Email: admin@gmail.com , and you can change password
+
 ---
 
 ## ✨ Key Features
